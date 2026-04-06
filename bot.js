@@ -1,19 +1,21 @@
-#!/usr/bin/env node
-'use strict';
+// !/usr/bin/env node
 
-const fs = require('fs');
-const path = require('path');
-const pino = require('pino');
-const {
-  default: makeWASocket,
+import fs from 'fs'
+import path from 'path'
+import pino from 'pino'
+import makeWASocket, {
   useMultiFileAuthState,
   DisconnectReason,
   jidNormalizedUser,
   getContentType,
   downloadMediaMessage
-} = require('@whiskeysockets/baileys');
+} from '@whiskeysockets/baileys'
 
-const ROOT = __dirname;
+import { fileURLToPath } from 'url'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+const ROOT = __dirname
 const AUTH_DIR = path.join(ROOT, 'auth');
 const DATA_DIR = path.join(ROOT, 'data');
 const MEDIA_DIR = path.join(DATA_DIR, 'media');
