@@ -110,8 +110,8 @@ function ts() {
 }
 
 function log(scope, message, extra = '') {
-  const suffix = extra ? ` | ${extra}` : '';
-  console.log(`[${ts()}] [${scope}] ${message}${suffix}`);
+  const suffix = extra ? ' | ' + extra : '';
+  console.log('[' + ts() + '] [' + scope + '] ' + message + suffix);
 }
 
 function normalizeJid(jid) {
@@ -122,11 +122,11 @@ function normalizeJid(jid) {
 function numberToJid(number) {
   const cleaned = String(number || '').replace(/[^0-9]/g, '');
   if (!cleaned) return null;
-  return `${cleaned}@s.whatsapp.net`;
+  return cleaned + '@s.whatsapp.net';
 }
 
 function messageKey(chatJid, messageId) {
-  return `${chatJid || ''}:${messageId || ''}`;
+  return (chatJid || '') + ':' + (messageId || '');
 }
 
 function cacheMessage(msg) {
@@ -186,7 +186,7 @@ async function trySaveMedia(messageObj, messageId) {
     if (!buffer) return null;
 
     const ext = '.bin';
-    const filename = `${Date.now()}_${messageId}${ext}`;
+    const filename = String(Date.now()) + '_' + messageId + ext;
     const fullPath = path.join(MEDIA_DIR, filename);
     fs.writeFileSync(fullPath, buffer);
     return fullPath;
@@ -201,12 +201,12 @@ async function forwardCaptureToSelf(entry, sourceMessage) {
 
   const header = [
     '📦 *Captured Message*',
-    `• reason: ${entry.reason}`,
-    `• from: ${entry.sender || 'unknown'}`,
-    `• chat: ${entry.chat || 'unknown'}`,
-    `• type: ${entry.type}`,
-    `• time: ${entry.time}`,
-    entry.group ? `• group: ${entry.group}` : null
+    '• reason: ' + entry.reason,
+    '• from: ' + (entry.sender || 'unknown'),
+    '• chat: ' + (entry.chat || 'unknown'),
+    '• type: ' + entry.type,
+    '• time: ' + entry.time,
+    entry.group ? ('• group: ' + entry.group) : null
   ].filter(Boolean).join('\n');
 
   try {
@@ -216,7 +216,7 @@ async function forwardCaptureToSelf(entry, sourceMessage) {
 
     if (msgType === 'conversation' || msgType === 'extendedTextMessage') {
       const text = unwrapped.conversation || unwrapped.extendedTextMessage?.text || '';
-      await state.sock.sendMessage(selfJid, { text: `${header}\n\n📝 ${text}` });
+      await state.sock.sendMessage(selfJid, { text: header + '\n\n📝 ' + text });
       return;
     }
 
@@ -231,7 +231,7 @@ async function forwardCaptureToSelf(entry, sourceMessage) {
       return;
     }
 
-    await state.sock.sendMessage(selfJid, { text: `${header}\n\n⚠️ Media/Text unavailable for forward.` });
+    await state.sock.sendMessage(selfJid, { text: header + '\n\n⚠️ Media/Text unavailable for forward.' });
   } catch (err) {
     log('FORWARD', 'Failed to forward captured message', err.message);
   }
@@ -276,7 +276,7 @@ async function handleCommand(msg) {
     switch (command) {
       case 'ping': {
         const uptime = Math.floor((Date.now() - state.startedAt) / 1000);
-        await reply(`pong ✅ online | uptime: ${uptime}s`);
+        await reply('pong ✅ online | uptime: ' + uptime + 's');
         log('CMD', 'ping executed');
         break;
       }
@@ -287,7 +287,7 @@ async function handleCommand(msg) {
           break;
         }
         await state.sock.updateBlockStatus(jid, 'block');
-        await reply(`Blocked: ${jid}`);
+        await reply('Blocked: ' + jid);
         log('CMD', 'block executed', jid);
         break;
       }
@@ -298,7 +298,7 @@ async function handleCommand(msg) {
           break;
         }
         await state.sock.updateBlockStatus(jid, 'unblock');
-        await reply(`Unblocked: ${jid}`);
+        await reply('Unblocked: ' + jid);
         log('CMD', 'unblock executed', jid);
         break;
       }
@@ -310,7 +310,7 @@ async function handleCommand(msg) {
         }
         state.config.viewOnceEnabled = val === 'on';
         saveConfig();
-        await reply(`view-once auto-save: ${val}`);
+        await reply('view-once auto-save: ' + val);
         log('CMD', 'viewonce toggled', val);
         break;
       }
@@ -322,13 +322,13 @@ async function handleCommand(msg) {
         }
         state.config.deletedEnabled = val === 'on';
         saveConfig();
-        await reply(`deleted-message auto-save: ${val}`);
+        await reply('deleted-message auto-save: ' + val);
         log('CMD', 'deleted toggled', val);
         break;
       }
       case 'contacts': {
         const list = state.config.trackedContacts;
-        await reply(list.length ? `Tracked contacts:\n${list.join('\n')}` : 'No tracked contacts.');
+        await reply(list.length ? ('Tracked contacts:\n' + list.join('\n')) : 'No tracked contacts.');
         log('CMD', 'contacts listed', String(list.length));
         break;
       }
@@ -339,7 +339,7 @@ async function handleCommand(msg) {
           break;
         }
         addTrackedContact(jid);
-        await reply(`Tracked: ${jid}`);
+        await reply('Tracked: ' + jid);
         log('CMD', 'track executed', jid);
         break;
       }
@@ -351,7 +351,7 @@ async function handleCommand(msg) {
         }
         state.config.trackedContacts = state.config.trackedContacts.filter((v) => v !== jid);
         saveConfig();
-        await reply(`Untracked: ${jid}`);
+        await reply('Untracked: ' + jid);
         log('CMD', 'untrack executed', jid);
         break;
       }
@@ -359,8 +359,8 @@ async function handleCommand(msg) {
         break;
     }
   } catch (err) {
-    log('CMD', 'Command failed', `${command}: ${err.message}`);
-    await state.sock.sendMessage(state.selfJid, { text: `Command error: ${command}` });
+    log('CMD', 'Command failed', command + ': ' + err.message);
+    await state.sock.sendMessage(state.selfJid, { text: 'Command error: ' + command });
   }
 
   return true;
@@ -374,7 +374,7 @@ function buildCaptureEntry(reason, source, msgObj, originalKey) {
   const type = detectMessageType(msgObj?.message);
 
   return {
-    captureKey: `${reason}:${chat}:${key.id || 'unknown'}`,
+    captureKey: reason + ':' + chat + ':' + (key.id || 'unknown'),
     reason,
     id: key.id || null,
     sender,
@@ -401,7 +401,7 @@ async function captureMessage(reason, source, msgObj, originalKey) {
   appendCaptured(entry);
   await forwardCaptureToSelf(entry, msgObj);
 
-  log('CAPTURE', `${reason} saved`, `${entry.type} | ${entry.chat}`);
+  log('CAPTURE', reason + ' saved', entry.type + ' | ' + entry.chat);
 }
 
 async function handleUpsert(messages) {
@@ -490,7 +490,7 @@ async function connectBot() {
     if (connection === 'close') {
       const code = lastDisconnect?.error?.output?.statusCode;
       const loggedOut = code === DisconnectReason.loggedOut;
-      log('CONN', 'Disconnected', `code=${code || 'unknown'} loggedOut=${loggedOut}`);
+      log('CONN', 'Disconnected', 'code=' + (code || 'unknown') + ' loggedOut=' + loggedOut);
       saveMessageCache();
 
       if (!loggedOut) {
