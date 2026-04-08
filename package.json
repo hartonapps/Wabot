@@ -1,0 +1,27 @@
+{
+  "name": "cypherus",
+  "version": "1.0.0",
+  "description": "Multi-user WhatsApp userbot platform using Baileys",
+  "main": "main.js",
+  "type": "module",
+  "scripts": {
+    "start": "node main.js",
+    "frontend": "node frontend.js"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.21",
+    "axios": "^1.9.0",
+    "chalk": "^5.3.0",
+    "express": "^4.21.2",
+    "hi-base32": "^0.5.1",
+    "jimp": "^1.6.0",
+    "mathjs": "^14.5.2",
+    "mime-types": "^2.1.35",
+    "node-fetch": "^3.3.2",
+    "pino": "^9.7.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "short-unique-id": "^5.2.0",
+    "ytsr": "^3.8.4"
+  }
+}
