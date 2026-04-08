@@ -1,8 +1,9 @@
 import fs from 'fs';
 import path from 'path';
 import pino from 'pino';
-import makeWASocket, { DisconnectReason, useMultiFileAuthState } from '@whiskeysockets/baileys';
+import makeWASocket, { Browsers, DisconnectReason, fetchLatestBaileysVersion, useMultiFileAuthState } from '@whiskeysockets/baileys';
 import qrcode from 'qrcode-terminal';
+import QRCode from 'qrcode';
 import { ensureBaseDirs, readJSON, writeJSON, BOTS_FILE, userSessionDir, userBotConfigPath, userMediaDir, userCachePath, userCapturedPath, defaultConfig } from './utils/storage.js';
 import { handleIncoming, handleSystemEvents, handleProtocol } from './commands/index.js';
 import { log } from './utils/logger.js';
@@ -24,6 +25,7 @@ async function startUserbot(username, opts = {}) {
 
   const sessionDir = userSessionDir(username);
   const { state, saveCreds } = await useMultiFileAuthState(path.join(sessionDir, 'auth'));
+  const { version } = await fetchLatestBaileysVersion();
   const { config } = loadUserConfig(username);
   const mediaDir = userMediaDir(username);
   const cacheFile = userCachePath(username);
@@ -33,6 +35,8 @@ async function startUserbot(username, opts = {}) {
 
   const sock = makeWASocket({
     auth: state,
+    version,
+    browser: Browsers.macOS('Desktop'),
     logger: pino({ level: 'silent' }),
     markOnlineOnConnect: false,
     syncFullHistory: false
@@ -57,6 +61,9 @@ async function startUserbot(username, opts = {}) {
     if (qr) {
       log(username, 'AUTH', 'QR generated for login.');
       qrcode.generate(qr, { small: true });
+      const qrPath = path.join(sessionDir, 'latest-qr.png');
+      await QRCode.toFile(qrPath, qr).catch(() => {});
+      log(username, 'AUTH', `QR image saved to ${qrPath}`);
     }
 
     if (opts.pairingCode && opts.phone && !sock.authState.creds.registered && connection !== 'open') {
@@ -84,6 +91,9 @@ async function startUserbot(username, opts = {}) {
 
       const bots = readJSON(BOTS_FILE, {});
       const stillActive = Boolean(bots?.[username]?.active);
+      if (code === 405) {
+        log(username, 'CONN', 'Code 405 detected. Usually fixed by deleting /sessions/<user>/auth and reconnecting.');
+      }
       if (!logout && stillActive) {
         setTimeout(() => startUserbot(username).catch((e) => log(username, 'ERR', e.message)), 5000);
       }

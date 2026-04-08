@@ -44,6 +44,7 @@ In frontend:
 4. Start your bot
 
 Cypherus also remembers WhatsApp linked sessions in `/sessions/` and can optionally remember the last frontend account in `data/frontend_session.json`.
+When QR login is started, QR is printed in terminal and also saved as image: `sessions/<username>/latest-qr.png`.
 
 For direct core start (auto-load active bots):
 
@@ -71,3 +72,4 @@ Use prefix `.` (works for message text, replies, captions):
 - Uses pure Node.js + JS packages where possible.
 - Avoids paid APIs and paid keys.
 - If some public free endpoint is down/rate-limited, that command may temporarily fail.
+- If you get repeated disconnect `code=405`, delete `sessions/<username>/auth` and reconnect.
