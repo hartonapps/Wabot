@@ -1,9 +1,11 @@
 import readline from 'readline';
-import { ensureBaseDirs, readJSON, writeJSON, BOTS_FILE } from './utils/storage.js';
+import path from 'path';
+import { ensureBaseDirs, readJSON, writeJSON, BOTS_FILE, DATA_DIR } from './utils/storage.js';
 import { registerUser, loginUser } from './utils/auth.js';
 import { startUserbot, running } from './main.js';
 
 ensureBaseDirs();
+const FRONTEND_SESSION_FILE = path.join(DATA_DIR, 'frontend_session.json');
 
 const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 const ask = (q) => new Promise((r) => rl.question(q, r));
@@ -22,16 +24,30 @@ async function dashboard(user) {
 
     if (choice === '1') {
       setBotState(user.username, { active: true, loginMethod: 'qr' });
-      await startUserbot(user.username, { pairingCode: false });
-      console.log('Bot start requested. Scan QR in terminal.');
+      try {
+        await startUserbot(user.username, { pairingCode: false });
+        console.log('Bot start requested. Scan QR in terminal.');
+      } catch (e) {
+        console.log(`Start failed: ${e.message}`);
+      }
     } else if (choice === '2') {
       const phone = (await ask('Phone with country code (e.g. 2348012345678): ')).trim();
       setBotState(user.username, { active: true, loginMethod: 'pairing', phone });
-      await startUserbot(user.username, { pairingCode: true, phone });
-      console.log('Pairing code requested (see terminal logs).');
+      try {
+        await startUserbot(user.username, { pairingCode: true, phone });
+        console.log('Pairing code requested (see terminal logs).');
+      } catch (e) {
+        console.log(`Pairing failed: ${e.message}`);
+      }
     } else if (choice === '3') {
       setBotState(user.username, { active: true });
-      if (!running.get(user.username)) await startUserbot(user.username);
+      if (!running.get(user.username)) {
+        try {
+          await startUserbot(user.username);
+        } catch (e) {
+          console.log(`Start failed: ${e.message}`);
+        }
+      }
       console.log('Bot started.');
     } else if (choice === '4') {
       setBotState(user.username, { active: false });
@@ -52,6 +68,14 @@ async function dashboard(user) {
 }
 
 async function main() {
+  const remembered = readJSON(FRONTEND_SESSION_FILE, null);
+  if (remembered?.username) {
+    const auto = (await ask(`Auto-login as ${remembered.username}? (y/N): `)).trim().toLowerCase();
+    if (auto === 'y' || auto === 'yes') {
+      await dashboard({ username: remembered.username });
+    }
+  }
+
   while (true) {
     console.log('\n=== Cypherus Frontend ===');
     console.log('1) Create account\n2) Login\n0) Exit');
@@ -67,7 +91,11 @@ async function main() {
       const password = (await ask('Password: ')).trim();
       const res = loginUser(username, password);
       if (!res.ok) console.log(`Error: ${res.error}`);
-      else await dashboard(res.user);
+      else {
+        const remember = (await ask('Remember this login on this device? (y/N): ')).trim().toLowerCase();
+        if (remember === 'y' || remember === 'yes') writeJSON(FRONTEND_SESSION_FILE, { username });
+        await dashboard(res.user);
+      }
     } else if (choice === '0') {
       break;
     }

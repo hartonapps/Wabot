@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import Jimp from 'jimp';
+import { Jimp, JimpMime } from 'jimp';
 import mime from 'mime-types';
 import { downloadMediaMessage, getContentType } from '@whiskeysockets/baileys';
 import pino from 'pino';
@@ -44,7 +44,7 @@ export function getQuoted(msg) {
 
 export async function stickerToImage(buffer) {
   const img = await Jimp.read(buffer);
-  return img.getBufferAsync(Jimp.MIME_PNG);
+  return await img.getBuffer(JimpMime.png);
 }
 
 export async function saveBufferToFile(dir, buffer, ext = '.bin') {

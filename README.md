@@ -6,6 +6,7 @@ Each registered user has their own WhatsApp Web session under `/sessions/<userna
 ## Features
 
 - Multi-user account system (register/login)
+- Optional remembered frontend login on local device
 - Multi-session WhatsApp connection (QR or pairing code)
 - Prefix command system (`.`)
 - Automation: autoreply, autoreact, antispam, auto-viewonce
@@ -41,6 +42,8 @@ In frontend:
 2. Login
 3. Connect via QR or Pairing Code
 4. Start your bot
+
+Cypherus also remembers WhatsApp linked sessions in `/sessions/` and can optionally remember the last frontend account in `data/frontend_session.json`.
 
 For direct core start (auto-load active bots):
 
